@@ -79,10 +79,11 @@ let connection: Connection;
 async function getConnection(): Promise<Connection> {
   if (connection) return connection;
 
-  connection = new Connection(url, 'recent');
+  const dev_url = "https://api.devnet.solana.com";
+  connection = new Connection(dev_url, 'recent');
   const version = await connection.getVersion();
 
-  console.log('Connection to cluster established:', url, version);
+  console.log('Connection to cluster established:', dev_url, version);
   return connection;
 }
 
@@ -92,6 +93,7 @@ export async function createTokenSwap(
 ): Promise<void> {
   const connection = await getConnection();
   const payer = await newAccountWithLamports(connection, 1000000000);
+  await new Promise(resolve => setTimeout(resolve, 10000));
   owner = await newAccountWithLamports(connection, 1000000000);
   const tokenSwapAccount = new Account();
 
@@ -146,7 +148,8 @@ export async function createTokenSwap(
   await mintB.mintTo(tokenAccountB, owner, [], currentSwapTokenB);
 
   console.log('creating token swap');
-  const swapPayer = await newAccountWithLamports(connection, 10000000000);
+  await new Promise(resolve => setTimeout(resolve, 10000));
+  const swapPayer = await newAccountWithLamports(connection, 1000000000);
   tokenSwap = await TokenSwap.createTokenSwap(
     connection,
     swapPayer,
