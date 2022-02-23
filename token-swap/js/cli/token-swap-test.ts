@@ -57,6 +57,7 @@ let currentFeeAmount = 0;
 // need to get slightly tweaked in the two cases.
 const SWAP_AMOUNT_IN = 100000;
 const SWAP_AMOUNT_OUT = SWAP_PROGRAM_OWNER_FEE_ADDRESS ? 90661 : 90674;
+const SWAP_AMOUNT_OUT_2 = 75602;
 const SWAP_FEE = SWAP_PROGRAM_OWNER_FEE_ADDRESS ? 22273 : 22277;
 const HOST_SWAP_FEE = SWAP_PROGRAM_OWNER_FEE_ADDRESS
   ? Math.floor((SWAP_FEE * HOST_FEE_NUMERATOR) / HOST_FEE_DENOMINATOR)
@@ -432,6 +433,8 @@ export async function createAccountAndSwapAtomic(): Promise<void> {
   currentSwapTokenA = info.amount.toNumber();
   info = await mintB.getAccountInfo(tokenAccountB);
   currentSwapTokenB = info.amount.toNumber();
+  console.log(currentSwapTokenA);
+  console.log(currentSwapTokenB);
 }
 
 export async function swap(): Promise<void> {
@@ -476,10 +479,12 @@ export async function swap(): Promise<void> {
   info = await mintA.getAccountInfo(tokenAccountA);
   assert(info.amount.toNumber() == currentSwapTokenA + SWAP_AMOUNT_IN);
   currentSwapTokenA += SWAP_AMOUNT_IN;
+  console.log(info.amount.toNumber());
 
   info = await mintB.getAccountInfo(tokenAccountB);
   assert(info.amount.toNumber() == currentSwapTokenB - SWAP_AMOUNT_OUT);
   currentSwapTokenB -= SWAP_AMOUNT_OUT;
+  console.log(info.amount.toNumber());
 
   info = await tokenPool.getAccountInfo(tokenAccountPool);
   assert(
@@ -488,6 +493,70 @@ export async function swap(): Promise<void> {
 
   info = await tokenPool.getAccountInfo(feeAccount);
   assert(info.amount.toNumber() == currentFeeAmount + OWNER_SWAP_FEE);
+
+  if (poolAccount != null) {
+    info = await tokenPool.getAccountInfo(poolAccount);
+    assert(info.amount.toNumber() == HOST_SWAP_FEE);
+  }
+}
+
+export async function swap2(): Promise<void> {
+  console.log('Creating swap token a account');
+  const userAccountA = await mintA.createAccount(owner.publicKey);
+  await mintA.mintTo(userAccountA, owner, [], SWAP_AMOUNT_IN);
+  const userTransferAuthority = new Account();
+  await mintA.approve(
+    userAccountA,
+    userTransferAuthority.publicKey,
+    owner,
+    [],
+    SWAP_AMOUNT_IN,
+  );
+  console.log('Creating swap token b account');
+  const userAccountB = await mintB.createAccount(owner.publicKey);
+  const poolAccount = SWAP_PROGRAM_OWNER_FEE_ADDRESS
+    ? await tokenPool.createAccount(owner.publicKey)
+    : null;
+
+  console.log('Swapping');
+  await tokenSwap.swap(
+    userAccountA,
+    tokenAccountA,
+    tokenAccountB,
+    userAccountB,
+    poolAccount,
+    userTransferAuthority,
+    SWAP_AMOUNT_IN,
+    SWAP_AMOUNT_OUT_2,
+  );
+
+  await sleep(500);
+
+  let info;
+  info = await mintA.getAccountInfo(userAccountA);
+  assert(info.amount.toNumber() == 0);
+
+  info = await mintB.getAccountInfo(userAccountB);
+  console.log(info.amount.toNumber());
+  assert(info.amount.toNumber() == SWAP_AMOUNT_OUT_2);
+
+  info = await mintA.getAccountInfo(tokenAccountA);
+  assert(info.amount.toNumber() == currentSwapTokenA + SWAP_AMOUNT_IN);
+  currentSwapTokenA += SWAP_AMOUNT_IN;
+  console.log(info.amount.toNumber());
+
+  info = await mintB.getAccountInfo(tokenAccountB);
+  assert(info.amount.toNumber() == currentSwapTokenB - SWAP_AMOUNT_OUT_2);
+  currentSwapTokenB -= SWAP_AMOUNT_OUT_2;
+  console.log(info.amount.toNumber());
+
+  info = await tokenPool.getAccountInfo(tokenAccountPool);
+  assert(
+    info.amount.toNumber() == DEFAULT_POOL_TOKEN_AMOUNT - POOL_TOKEN_AMOUNT,
+  );
+
+  info = await tokenPool.getAccountInfo(feeAccount);
+  console.log(info.amount.toNumber());
 
   if (poolAccount != null) {
     info = await tokenPool.getAccountInfo(poolAccount);

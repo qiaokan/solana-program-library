@@ -2,6 +2,7 @@ import {
   createAccountAndSwapAtomic,
   createTokenSwap,
   swap,
+  swap2,
   depositAllTokenTypes,
   withdrawAllTokenTypes,
   depositSingleTokenTypeExactAmountIn,
@@ -16,6 +17,21 @@ async function main() {
   console.log(
     'Run test: createTokenSwap (constant product, used further in tests)',
   );
+  await createTokenSwap(CurveType.ConstantProduct);
+  console.log('Run test: deposit all token types');
+  await depositAllTokenTypes();
+  console.log('Run test: withdraw all token types');
+  await withdrawAllTokenTypes();
+  console.log('Run test: swap');
+  await swap();
+  await swap2();
+  console.log('Run test: create account, approve, swap all at once');
+  await createAccountAndSwapAtomic();
+  console.log('Run test: deposit one exact amount in');
+  await depositSingleTokenTypeExactAmountIn();
+  console.log('Run test: withrdaw one exact amount out');
+  await withdrawSingleTokenTypeExactAmountOut();
+  console.log('Success\n');
 }
 
 main()
