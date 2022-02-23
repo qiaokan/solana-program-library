@@ -32,6 +32,8 @@
     "prepare": "npm run build",
     "start": "ts-node cli/main.ts",
     "start-local":"ts-node cli/local_main.ts",
+    "swap-local":"ts-node cli/swap.ts",
+    "setup-local":"ts-node cli/setup.ts",
     "start-with-local-validator": "start-server-and-test 'solana-test-validator --bpf-program SwaPpA9LAaLfeLi3a68M4DjnLqgtticKg6CnyNwgAC8 ../../target/deploy/spl_token_swap.so --reset --quiet' http://localhost:8899/health start-local",
     "lint": "npm run pretty && eslint .",
     "lint:fix": "npm run pretty:fix && eslint . --fix",
