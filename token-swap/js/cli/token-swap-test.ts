@@ -76,24 +76,27 @@ function assert(condition: boolean, message?: string) {
 }
 
 let connection: Connection;
-async function getConnection(): Promise<Connection> {
+async function getConnection(use_dev?:boolean): Promise<Connection> {
   if (connection) return connection;
 
-  const dev_url = "https://api.devnet.solana.com";
-  connection = new Connection(dev_url, 'recent');
+  const actual_url = use_dev?'https://api.devnet.solana.com':url;
+  connection = new Connection(actual_url, 'recent');
   const version = await connection.getVersion();
 
-  console.log('Connection to cluster established:', dev_url, version);
+  console.log('Connection to cluster established:', actual_url, version);
   return connection;
 }
 
 export async function createTokenSwap(
   curveType: number,
   curveParameters?: Numberu64,
+  use_dev?:boolean,
 ): Promise<void> {
-  const connection = await getConnection();
+  const connection = await getConnection(use_dev);
   const payer = await newAccountWithLamports(connection, 1000000000);
-  await new Promise(resolve => setTimeout(resolve, 10000));
+  if (use_dev) {
+    await new Promise(resolve => setTimeout(resolve, 10000));
+  }
   owner = await newAccountWithLamports(connection, 1000000000);
   const tokenSwapAccount = new Account();
 
@@ -141,6 +144,7 @@ export async function createTokenSwap(
     2,
     TOKEN_PROGRAM_ID,
   );
+  console.log(mintB.publicKey.toString());
 
   console.log('creating token B account');
   tokenAccountB = await mintB.createAccount(authority);
@@ -148,7 +152,9 @@ export async function createTokenSwap(
   await mintB.mintTo(tokenAccountB, owner, [], currentSwapTokenB);
 
   console.log('creating token swap');
-  await new Promise(resolve => setTimeout(resolve, 10000));
+  if (use_dev) {
+    await new Promise(resolve => setTimeout(resolve, 10000));
+  }
   const swapPayer = await newAccountWithLamports(connection, 1000000000);
   tokenSwap = await TokenSwap.createTokenSwap(
     connection,
@@ -303,9 +309,9 @@ export async function withdrawAllTokenTypes(): Promise<void> {
   );
 
   console.log('Creating withdraw token A account');
-  let userAccountA = await mintA.createAccount(owner.publicKey);
+  const userAccountA = await mintA.createAccount(owner.publicKey);
   console.log('Creating withdraw token B account');
-  let userAccountB = await mintB.createAccount(owner.publicKey);
+  const userAccountB = await mintB.createAccount(owner.publicKey);
 
   const userTransferAuthority = new Account();
   console.log('Approving withdrawal from pool account');
@@ -351,7 +357,7 @@ export async function withdrawAllTokenTypes(): Promise<void> {
 
 export async function createAccountAndSwapAtomic(): Promise<void> {
   console.log('Creating swap token a account');
-  let userAccountA = await mintA.createAccount(owner.publicKey);
+  const userAccountA = await mintA.createAccount(owner.publicKey);
   await mintA.mintTo(userAccountA, owner, [], SWAP_AMOUNT_IN);
 
   // @ts-ignore
@@ -430,7 +436,7 @@ export async function createAccountAndSwapAtomic(): Promise<void> {
 
 export async function swap(): Promise<void> {
   console.log('Creating swap token a account');
-  let userAccountA = await mintA.createAccount(owner.publicKey);
+  const userAccountA = await mintA.createAccount(owner.publicKey);
   await mintA.mintTo(userAccountA, owner, [], SWAP_AMOUNT_IN);
   const userTransferAuthority = new Account();
   await mintA.approve(
@@ -441,8 +447,8 @@ export async function swap(): Promise<void> {
     SWAP_AMOUNT_IN,
   );
   console.log('Creating swap token b account');
-  let userAccountB = await mintB.createAccount(owner.publicKey);
-  let poolAccount = SWAP_PROGRAM_OWNER_FEE_ADDRESS
+  const userAccountB = await mintB.createAccount(owner.publicKey);
+  const poolAccount = SWAP_PROGRAM_OWNER_FEE_ADDRESS
     ? await tokenPool.createAccount(owner.publicKey)
     : null;
 
