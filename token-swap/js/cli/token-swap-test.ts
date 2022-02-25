@@ -85,7 +85,8 @@ export async function createTokenSwap(
     await new Promise(resolve => setTimeout(resolve, 10000));
   }
   const owner = await readAccountWithLamports(connection, '/Users/qiaokan/.config/solana/id.json',1000000000);
-  const tokenSwapAccount = await readAccountWithLamports(connection, '/Users/qiaokan/.config/solana/bob.json',0);
+  const tokenSwapAccount = new Account();
+  console.log('swap pk:', tokenSwapAccount.publicKey.toString());
 
   [authority, bumpSeed] = await PublicKey.findProgramAddress(
     [tokenSwapAccount.publicKey.toBuffer()],
@@ -116,6 +117,7 @@ export async function createTokenSwap(
     2,
     TOKEN_PROGRAM_ID,
   );
+  console.log('mintA:', mintA.publicKey.toString());
 
   console.log('creating token A account');
   tokenAccountA = await mintA.createAccount(authority);
@@ -131,7 +133,7 @@ export async function createTokenSwap(
     2,
     TOKEN_PROGRAM_ID,
   );
-  console.log(mintB.publicKey.toString());
+  console.log('mintB:', mintB.publicKey.toString());
 
   console.log('creating token B account');
   tokenAccountB = await mintB.createAccount(authority);
@@ -168,7 +170,6 @@ export async function createTokenSwap(
     curveType,
     curveParameters,
   );
-
 
   console.log('loading token swap');
   const fetchedTokenSwap = await TokenSwap.loadTokenSwap(
@@ -214,39 +215,40 @@ export async function createTokenSwap(
 }
 
 export async function swap(): Promise<void> {
-  const connection = await getConnection(false);
+  const connection = await getConnection(true);
   const swapPayer = await readAccountWithLamports(connection, '/Users/qiaokan/.config/solana/alice.json',0);
-  const tokenSwapPk = await readAccountWithLamports(connection, '/Users/qiaokan/.config/solana/bob.json',0);
+  const tokenSwapPk = new PublicKey('Bf3FsVEN1JNgAq6JAuybgpPGmPxjXFsM6aMBMxhHEkSC');
   const fetchedTokenSwap = await TokenSwap.loadTokenSwap(
     connection,
-    tokenSwapPk.publicKey,
+    tokenSwapPk,
     TOKEN_SWAP_PROGRAM_ID,
     swapPayer,
   );
 
-  const owner = await readAccountWithLamports(connection, '/Users/qiaokan/.config/solana/id.json',0);
+  const swapper = await readAccountWithLamports(connection, '/Users/qiaokan/.config/solana/id.json',0);
+  const owner = await readAccountWithLamports(connection, '/Users/qiaokan/.config/solana/kan.json',0);
   const payer = await readAccountWithLamports(connection, '/Users/qiaokan/.config/solana/payer.json',0);
   const tokenPool = new Token(connection, fetchedTokenSwap.poolToken, TOKEN_PROGRAM_ID, payer);
-  const mintA = new Token(connection, fetchedTokenSwap.mintA, TOKEN_PROGRAM_ID, payer);
-  const mintB = new Token(connection, fetchedTokenSwap.mintB, TOKEN_PROGRAM_ID, payer);
+  const mintA = new Token(connection, fetchedTokenSwap.mintB, TOKEN_PROGRAM_ID, payer);
+  const mintB = new Token(connection, fetchedTokenSwap.mintA, TOKEN_PROGRAM_ID, payer);
   console.log('Creating swap token a account');
-  const userAccountA = await mintA.createAccount(owner.publicKey);
+  const userAccountA = await mintA.createAccount(swapper.publicKey);
   await mintA.mintTo(userAccountA, owner, [], SWAP_AMOUNT_IN);
   const userTransferAuthority = new Account();
   await mintA.approve(
     userAccountA,
     userTransferAuthority.publicKey,
-    owner,
+    swapper,
     [],
     SWAP_AMOUNT_IN,
   );
   console.log('Creating swap token b account');
-  const userAccountB = await mintB.createAccount(owner.publicKey);
+  const userAccountB = await mintB.createAccount(swapper.publicKey);
   const poolAccount = SWAP_PROGRAM_OWNER_FEE_ADDRESS
     ? await tokenPool.createAccount(owner.publicKey)
     : null;
-  const tokenAccountA = fetchedTokenSwap.tokenAccountA;
-  const tokenAccountB = fetchedTokenSwap.tokenAccountB;
+  const tokenAccountA = fetchedTokenSwap.tokenAccountB;
+  const tokenAccountB = fetchedTokenSwap.tokenAccountA;
   console.log('Swapping');
   await fetchedTokenSwap.swap(
     userAccountA,
@@ -256,21 +258,21 @@ export async function swap(): Promise<void> {
     poolAccount,
     userTransferAuthority,
     SWAP_AMOUNT_IN,
-    SWAP_AMOUNT_OUT,
+    1,
   );
 
   await sleep(500);
 
   let info;
   info = await mintA.getAccountInfo(userAccountA);
-  assert(info.amount.toNumber() == 0);
+  console.log('userAccount A remains:', info.amount.toNumber());
 
   info = await mintB.getAccountInfo(userAccountB);
-  assert(info.amount.toNumber() == SWAP_AMOUNT_OUT);
+  console.log('userAccount B remains:', info.amount.toNumber());
 
   info = await mintA.getAccountInfo(tokenAccountA);
-  assert(info.amount.toNumber() == currentSwapTokenA + SWAP_AMOUNT_IN);
+  console.log('A token account remains:', info.amount.toNumber());
 
   info = await mintB.getAccountInfo(tokenAccountB);
-  assert(info.amount.toNumber() == currentSwapTokenB - SWAP_AMOUNT_OUT);
+  console.log('B token account remains:', info.amount.toNumber());
 }
