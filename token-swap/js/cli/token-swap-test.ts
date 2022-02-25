@@ -33,11 +33,7 @@ const HOST_FEE_DENOMINATOR = 100;
 const currentSwapTokenA = 1000000;
 const currentSwapTokenB = 1000000;
 
-// Swap instruction constants
-// Because there is no withdraw fee in the production version, these numbers
-// need to get slightly tweaked in the two cases.
-const SWAP_AMOUNT_IN = 100000;
-const SWAP_AMOUNT_OUT = 90661;
+const SWAP_AMOUNT_IN = 100;
 
 function assert(condition: boolean, message?: string) {
   if (!condition) {
@@ -232,18 +228,18 @@ export async function swap(): Promise<void> {
   const mintA = new Token(connection, fetchedTokenSwap.mintB, TOKEN_PROGRAM_ID, payer);
   const mintB = new Token(connection, fetchedTokenSwap.mintA, TOKEN_PROGRAM_ID, payer);
   console.log('Creating swap token a account');
-  const userAccountA = await mintA.createAccount(swapper.publicKey);
-  await mintA.mintTo(userAccountA, owner, [], SWAP_AMOUNT_IN);
+  const userAccountA = await mintA.getOrCreateAssociatedAccountInfo(swapper.publicKey);
+  //await mintA.mintTo(userAccountA, owner, [], SWAP_AMOUNT_IN);
   const userTransferAuthority = new Account();
   await mintA.approve(
-    userAccountA,
+    userAccountA.address,
     userTransferAuthority.publicKey,
     swapper,
     [],
     SWAP_AMOUNT_IN,
   );
   console.log('Creating swap token b account');
-  const userAccountB = await mintB.createAccount(swapper.publicKey);
+  const userAccountB = await mintB.getOrCreateAssociatedAccountInfo(swapper.publicKey);
   const poolAccount = SWAP_PROGRAM_OWNER_FEE_ADDRESS
     ? await tokenPool.createAccount(owner.publicKey)
     : null;
@@ -251,10 +247,10 @@ export async function swap(): Promise<void> {
   const tokenAccountB = fetchedTokenSwap.tokenAccountA;
   console.log('Swapping');
   await fetchedTokenSwap.swap(
-    userAccountA,
+    userAccountA.address,
     tokenAccountA,
     tokenAccountB,
-    userAccountB,
+    userAccountB.address,
     poolAccount,
     userTransferAuthority,
     SWAP_AMOUNT_IN,
@@ -264,10 +260,10 @@ export async function swap(): Promise<void> {
   await sleep(500);
 
   let info;
-  info = await mintA.getAccountInfo(userAccountA);
+  info = await mintA.getAccountInfo(userAccountA.address);
   console.log('userAccount A remains:', info.amount.toNumber());
 
-  info = await mintB.getAccountInfo(userAccountB);
+  info = await mintB.getAccountInfo(userAccountB.address);
   console.log('userAccount B remains:', info.amount.toNumber());
 
   info = await mintA.getAccountInfo(tokenAccountA);
