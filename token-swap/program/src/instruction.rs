@@ -9,6 +9,7 @@ use solana_program::{
     program_error::ProgramError,
     program_pack::Pack,
     pubkey::Pubkey,
+    msg,
 };
 use std::convert::TryInto;
 use std::mem::size_of;
@@ -342,6 +343,7 @@ pub fn initialize(
     fees: Fees,
     swap_curve: SwapCurve,
 ) -> Result<Instruction, ProgramError> {
+    msg!("iiiiiiiiiii");
     let init_data = SwapInstruction::Initialize(Initialize { fees, swap_curve });
     let data = init_data.pack();
 

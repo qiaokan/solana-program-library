@@ -390,7 +390,6 @@ export class TokenSwap {
       curveType,
       payer,
     );
-    console.log(tokenSwap);
 
     // Allocate memory for the account
     const balanceNeeded = await TokenSwap.getMinBalanceRentForExemptTokenSwap(
@@ -428,7 +427,6 @@ export class TokenSwap {
       curveType,
       curveParameters,
     );
-    console.log(instruction);
 
     transaction.add(instruction);
     await sendAndConfirmTransaction(

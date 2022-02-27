@@ -11,6 +11,7 @@ use {
     solana_program::{
         program_error::ProgramError,
         program_pack::{IsInitialized, Pack, Sealed},
+        msg,
     },
     spl_math::{checked_ceil_div::CheckedCeilDiv, precise_number::PreciseNumber},
 };
@@ -29,19 +30,27 @@ pub fn swap(
     swap_source_amount: u128,
     swap_destination_amount: u128,
 ) -> Option<SwapWithoutFeesResult> {
+    msg!(&source_amount.to_string());
+    msg!(&swap_source_amount.to_string());
+    msg!(&swap_destination_amount.to_string());
     let invariant = swap_source_amount.checked_mul(swap_destination_amount)?;
+    msg!("1111111");
 
     let new_swap_source_amount = swap_source_amount.checked_add(source_amount)?;
+    msg!("2222222");
     let (new_swap_destination_amount, new_swap_source_amount) =
         invariant.checked_ceil_div(new_swap_source_amount)?;
-
+    msg!("33333333");
     let source_amount_swapped = new_swap_source_amount.checked_sub(swap_source_amount)?;
+    msg!("44444444");
+    msg!(&swap_destination_amount.to_string());
+    msg!(&new_swap_destination_amount.to_string());
     let destination_amount_swapped =
         map_zero_to_none(swap_destination_amount.checked_sub(new_swap_destination_amount)?)?;
-
+    msg!("55555555");
     Some(SwapWithoutFeesResult {
         source_amount_swapped,
-        destination_amount_swapped,
+        destination_amount_swapped
     })
 }
 

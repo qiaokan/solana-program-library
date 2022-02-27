@@ -29,7 +29,7 @@ pub enum SwapError {
     #[error("Deserialized account is not an SPL Token account")]
     ExpectedAccount,
     /// The input token account is empty.
-    #[error("Input token account empty")]
+    #[error("Input token account emptysdfsdfsdfsdsfs")]
     EmptySupply,
     /// The pool token mint has a non-zero supply.
     #[error("Pool token mint has a non-zero supply")]

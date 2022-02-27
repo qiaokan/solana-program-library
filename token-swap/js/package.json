@@ -35,7 +35,7 @@
     "swap":"ts-node cli/swap.ts",
     "setup-local":"ts-node cli/setup.ts",
     "setup-dev":"ts-node cli/setup-dev.ts",
-    "start-with-local-validator": "start-server-and-test 'solana-test-validator --bpf-program SwaPpA9LAaLfeLi3a68M4DjnLqgtticKg6CnyNwgAC8 ../../target/deploy/spl_token_swap.so --reset --quiet' http://localhost:8899/health start-local",
+    "start-with-local-validator": "start-server-and-test 'solana-test-validator --bpf-program G8PzBPRCmWeBXv1anCstbatNMjWSvbF2uDnocKqpQb9i ../../target/deploy/spl_token_swap.so --reset --quiet' http://localhost:8899/health start-local",
     "lint": "npm run pretty && eslint .",
     "lint:fix": "npm run pretty:fix && eslint . --fix",
     "generate:flow": "flowgen dist/index.d.ts -o dist/module.flow.js",

@@ -210,6 +210,7 @@ impl Processor {
         accounts: &[AccountInfo],
         swap_constraints: &Option<SwapConstraints>,
     ) -> ProgramResult {
+        msg!("xxxxxxxxxxxxxxxxxxxxxxxxxxx");
         let account_info_iter = &mut accounts.iter();
         let swap_info = next_account_info(account_info_iter)?;
         let authority_info = next_account_info(account_info_iter)?;
@@ -392,6 +393,7 @@ impl Processor {
         } else {
             TradeDirection::BtoA
         };
+        msg!("confirm error");
         let result = token_swap
             .swap_curve()
             .swap(
@@ -402,6 +404,7 @@ impl Processor {
                 token_swap.fees(),
             )
             .ok_or(SwapError::ZeroTradingTokens)?;
+        msg!("shouldn't be here");
         if result.destination_amount_swapped < to_u128(minimum_amount_out)? {
             return Err(SwapError::ExceededSlippage.into());
         }
