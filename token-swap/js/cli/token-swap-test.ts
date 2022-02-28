@@ -33,7 +33,7 @@ const HOST_FEE_DENOMINATOR = 100;
 const currentSwapTokenA = 1000000;
 const currentSwapTokenB = 1000000;
 
-const SWAP_AMOUNT_IN = 1000000000;
+const SWAP_AMOUNT_IN = 10;
 
 function assert(condition: boolean, message?: string) {
   if (!condition) {
@@ -71,8 +71,6 @@ export async function createTokenSwap(
   // Tokens swapped
   let mintA: Token;
   let mintB: Token;
-  let tokenAccountA: PublicKey;
-  let tokenAccountB: PublicKey;
 
   const connection = await getConnection(use_dev);
   const payer = await readAccountWithLamports(connection, '/Users/qiaokan/.config/solana/payer.json',1000000000);
@@ -80,15 +78,14 @@ export async function createTokenSwap(
     await new Promise(resolve => setTimeout(resolve, 10000));
   }
   const owner = await readAccountWithLamports(connection, '/Users/qiaokan/.config/solana/id.json',1000000000);
-  const tokenSwapAccount = await readAccountWithLamports(connection, '/Users/qiaokan/.config/solana/token_swap.json',0);
+  const tokenSwapAccount = await readAccountWithLamports(connection, '/Users/qiaokan/.config/solana/weth_to_sol_id.json',0);
   console.log('swap pk:', tokenSwapAccount.publicKey.toString());
   //  console.log('swap sk:', tokenSwapAccount.secretKey.toJSON());
 
-  // [authority, bumpSeed] = await PublicKey.findProgramAddress(
-  //   [tokenSwapAccount.publicKey.toBuffer()],
-  //   TOKEN_SWAP_PROGRAM_ID,
-  // );
-  authority = new PublicKey('9uNyBoD1qPLD2RcW225LM1EfvVjmb4j98EQumDewSUcn');
+  [authority, bumpSeed] = await PublicKey.findProgramAddress(
+    [tokenSwapAccount.publicKey.toBuffer()],
+    TOKEN_SWAP_PROGRAM_ID,
+  );
   console.log('authority:', authority.toString());
 
   console.log('creating pool mint');
@@ -123,27 +120,20 @@ export async function createTokenSwap(
   console.log('minting token A to swap');
   await mintA.mintTo(tokenAccountA, owner, [], currentSwapTokenA);
   */
-  const wsol = new PublicKey('52Y4nFRc8cH6YsKWwcYRj3HjApyU9EKGdwJGR9HdFXBJ');
-  mintA = new Token(connection, wsol, TOKEN_PROGRAM_ID, payer);
-  tokenAccountA = new PublicKey('3jquCQfhmcbaXTLcnMDuS8Hb1Rx41dWJ3V548oFowhMY');
+  const soEth = new PublicKey('5GYUUQwZzPKK3Thwn5jpbTBPX6cgBTPYzN1Q9EvXWkBq');
+  mintA = new Token(connection, soEth, TOKEN_PROGRAM_ID, payer);
+  const tokenAccountA = new PublicKey('LHea2VAPyPQHybWAGKGbRrwBWHXa6vytUqsTnZEpnGN');
   console.log('tokenAccountA:', tokenAccountA.toString());
   //await mintA.mintTo(tokenAccountA, owner, [], currentSwapTokenA);
 
   console.log('creating token B');
-  mintB = await Token.createMint(
-    connection,
-    payer,
-    owner.publicKey,
-    null,
-    2,
-    TOKEN_PROGRAM_ID,
-  );
+  const wsol = new PublicKey('52Y4nFRc8cH6YsKWwcYRj3HjApyU9EKGdwJGR9HdFXBJ');
+  mintB = new Token(connection, wsol, TOKEN_PROGRAM_ID, payer);
   console.log('mintB:', mintB.publicKey.toString());
 
   console.log('creating token B account');
-  tokenAccountB = await mintB.createAccount(authority);
-  console.log('minting token B to swap');
-  await mintB.mintTo(tokenAccountB, owner, [], currentSwapTokenB);
+  const tokenAccountB = new PublicKey('CBxRgwmFftLRE7vCqi5csVaQMFu5B8yR8vFgXXhXPWEP');
+  console.log('tokenAccountB:', tokenAccountB.toString());
 
   console.log('creating token swap');
   if (use_dev) {
@@ -222,7 +212,7 @@ export async function createTokenSwap(
 export async function swap(): Promise<void> {
   const connection = await getConnection(true);
   const swapPayer = await readAccountWithLamports(connection, '/Users/qiaokan/.config/solana/alice.json',0);
-  const tokenSwapPk = new PublicKey('6uEBcf4q2tW7wNbbboRQqUkziwSGvfEbBQix9G7n3a2x');
+  const tokenSwapPk = new PublicKey('DqZpaUFTkYMCoer4Bqhr1NErkj958EcB2cynmKpRQcwh');
   const fetchedTokenSwap = await TokenSwap.loadTokenSwap(
     connection,
     tokenSwapPk,
